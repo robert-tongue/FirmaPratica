@@ -4,124 +4,166 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Firma Pratica Digitale</title>
+    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
     <style>
         :root { --primary: #005596; --bg: #f4f7f9; --success: #28a745; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h2 { color: var(--primary); text-align: center; font-size: 1.2em; }
-        #pdf-viewer { width: 100%; max-height: 250px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; background: #525659; }
-        canvas.pdf-page { width: 100% !important; height: auto !important; display: block; margin-bottom: 5px; }
-        .sig-container { position: relative; width: 100%; height: 160px; background: #fff; border: 2px solid #ddd; border-radius: 8px; touch-action: none; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; -webkit-tap-highlight-color: transparent; }
+        
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        h2 { color: var(--primary); text-align: center; font-size: 1.2em; margin-bottom: 20px; }
+        h3 { margin-top: 0; font-size: 1em; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 15px; }
+
+        /* Anteprima PDF Migliorata */
+        #pdf-viewer { 
+            width: 100%; 
+            max-height: 400px; 
+            overflow-y: auto; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            background: #ebebeb; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas.pdf-page { width: 100% !important; height: auto !important; display: block; margin: 10px auto; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+
+        /* Firme */
+        .sig-container { position: relative; width: 100%; height: 160px; background: #fff; border: 2px solid #ccc; border-radius: 8px; touch-action: none; }
         canvas.sig-pad { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
-        button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; -webkit-appearance: none; }
-        .btn-main { background: var(--primary); color: white; width: 100%; padding: 18px; font-size: 1.1em; margin-top: 15px; }
-        .btn-copy { background: var(--success); color: white; width: 100%; padding: 12px; margin: 10px 0; display: none; }
-        .btn-clear { background: #f8d7da; color: #721c24; padding: 6px 15px; font-size: 0.8em; margin-top: 5px; }
-        .btn-photo { background: #e9ecef; color: #495057; width: 100%; padding: 15px; margin-top: 10px; border: 1px solid #ccc; }
-        #status { text-align: center; font-weight: bold; color: var(--primary); margin-top: 20px; }
+        
+        button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; -webkit-appearance: none; transition: 0.2s; }
+        .btn-main { background: var(--primary); color: white; width: 100%; padding: 18px; font-size: 1.1em; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,85,150,0.3); }
+        .btn-copy { background: var(--success); color: white; width: 100%; padding: 12px; margin: 12px 0; display: none; font-size: 0.9em; }
+        .btn-clear { background: #f8d7da; color: #721c24; padding: 6px 12px; font-size: 0.75em; margin-top: 8px; }
+        .btn-photo { background: #fff; color: #495057; width: 100%; padding: 15px; margin-top: 10px; border: 1px solid #ccc; text-align: left; position: relative; }
+        .btn-photo::after { content: '📷'; position: absolute; right: 15px; }
+        
+        #status { text-align: center; font-weight: bold; color: var(--primary); margin-top: 20px; min-height: 1.5em; }
+        .label-f { display: block; margin: 15px 0 5px; font-weight: bold; font-size: 0.9em; color: #555; }
     </style>
 </head>
 <body>
 
-    <h2 id="displayNome">Caricamento...</h2>
+    <h2 id="displayNome">Caricamento in corso...</h2>
 
     <div class="card">
-        <h3>📄 Anteprima Modulo</h3>
-        <div id="pdf-viewer"></div>
+        <h3>📄 Documento da visionare</h3>
+        <div id="pdf-viewer"><p style="text-align:center; padding:20px; color:#666;">Caricamento modulo...</p></div>
     </div>
 
     <div class="card">
-        <h3>✍️ Firme</h3>
-        <label>1. Firma Delega</label>
+        <h3>✍️ Firme Digitali</h3>
+        
+        <label class="label-f">Firma 1: Delega Patronato</label>
         <div class="sig-container"><canvas id="p1" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[0].clear()">CANCELLA</button>
-        <button id="btnCopia" class="btn-copy" onclick="eseguiCopia()">✨ COPIA FIRMA SU TUTTE</button>
-        <label style="display:block; margin-top:15px;">2. Firma Privacy</label>
+        
+        <button id="btnCopia" class="btn-copy" onclick="copiaFirmaSuTutte()">✨ COPIA QUESTA FIRMA SU TUTTE</button>
+
+        <label class="label-f">Firma 2: Consenso Privacy</label>
         <div class="sig-container"><canvas id="p2" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[1].clear()">CANCELLA</button>
-        <label style="display:block; margin-top:15px;">3. Firma Dichiarazione</label>
+
+        <label class="label-f">Firma 3: Dichiarazione Sostitutiva</label>
         <div class="sig-container"><canvas id="p3" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[2].clear()">CANCELLA</button>
     </div>
 
     <div class="card">
-        <h3>📸 Documenti</h3>
-        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="lbl-ff">📷 FOTO FRONTE</button>
-        <input type="file" id="ff" style="display:none" accept="image/*" onchange="conferma('lbl-ff')">
-        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="lbl-fr">📷 FOTO RETRO</button>
-        <input type="file" id="fr" style="display:none" accept="image/*" onchange="conferma('lbl-fr')">
+        <h3>📸 Documenti Identità</h3>
+        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="lbl-ff">FOTO FRONTE</button>
+        <input type="file" id="ff" style="display:none" accept="image/*" onchange="segnaOk('lbl-ff')">
+        
+        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="lbl-fr">FOTO RETRO</button>
+        <input type="file" id="fr" style="display:none" accept="image/*" onchange="segnaOk('lbl-fr')">
     </div>
 
-    <button class="btn-main" onclick="genera()">CONFERMA E INVIA</button>
+    <button class="btn-main" onclick="finalizza()">CONFERMA E INVIA PRATICA</button>
     <div id="status"></div>
 
     <script>
         let pads = [];
-        let pdfArrayBuffer = null;
+        let rawPdfData = null;
         
-        // RECUPERO PARAMETRI
         const urlParams = new URLSearchParams(window.location.search);
         const nomeAssistito = urlParams.get('n') || "Assistito";
-        // IMPORTANTE: Nome del file PDF caricato su GitHub
-        const pdfUrl = "MandatoEpaca.pdf"; 
+        const pdfUrl = "modulo.pdf"; 
 
-        document.getElementById('displayNome').innerText = "Pratica: " + nomeAssistito;
+        document.getElementById('displayNome').innerText = "Pratica di: " + nomeAssistito;
 
         window.onload = async () => {
             try {
-                // SCARICA IL PDF DAL TUO GITHUB
                 const response = await fetch(pdfUrl);
-                pdfArrayBuffer = await response.arrayBuffer();
+                const buffer = await response.arrayBuffer();
+                rawPdfData = new Uint8Array(buffer);
 
-                // MOSTRA ANTEPRIMA
-                const pdf = await pdfjsLib.getDocument({data: pdfArrayBuffer}).promise;
+                // Anteprima PDF Migliorata (PDF.js)
+                const pdf = await pdfjsLib.getDocument({data: new Uint8Array(rawPdfData)}).promise;
                 const viewer = document.getElementById('pdf-viewer');
+                viewer.innerHTML = '';
+                
                 for(let i=1; i<=pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page';
                     const context = canvas.getContext('2d');
-                    const viewport = page.getViewport({scale: 0.8});
+                    // Ottimizzazione zoom per mobile
+                    const viewport = page.getViewport({scale: (window.innerWidth < 500) ? 0.6 : 1.0});
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
                     await page.render({canvasContext: context, viewport: viewport}).promise;
                     viewer.appendChild(canvas);
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                document.getElementById('pdf-viewer').innerHTML = "<p style='padding:20px; color:red;'>Errore: Modulo non trovato su GitHub.</p>";
+            }
 
-            // SETUP FIRME
+            // Inizializzazione Firme
             setTimeout(() => {
                 ['p1','p2','p3'].forEach((id, i) => {
                     const cv = document.getElementById(id);
                     const ratio = window.devicePixelRatio || 1;
                     cv.width = cv.offsetWidth * ratio; cv.height = cv.offsetHeight * ratio;
                     cv.getContext("2d").scale(ratio, ratio);
-                    const p = new SignaturePad(cv);
+                    const p = new SignaturePad(cv, { backgroundColor: 'rgba(255, 255, 255, 0)' });
                     pads.push(p);
-                    if(i === 0) p.onBegin = () => document.getElementById('btnCopia').style.display = 'block';
+
+                    // Mostra tasto copia solo quando si firma il primo campo
+                    if(i === 0) {
+                        p.addEventListener("beginStroke", () => {
+                            document.getElementById('btnCopia').style.display = 'block';
+                        });
+                    }
                 });
-            }, 500);
+            }, 600);
         };
 
-        function eseguiCopia() {
+        function copiaFirmaSuTutte() {
+            if(pads[0].isEmpty()) return;
             const data = pads[0].toDataURL();
-            pads[1].fromDataURL(data); pads[2].fromDataURL(data);
+            pads[1].fromDataURL(data);
+            pads[2].fromDataURL(data);
         }
 
-        function conferma(id) {
-            document.getElementById(id).innerText = "✅ ACQUISITA";
-            document.getElementById(id).style.background = "#d4edda";
+        function segnaOk(id) {
+            const el = document.getElementById(id);
+            el.innerText = "✅ DOCUMENTO ACQUISITO";
+            el.style.background = "#d4edda";
+            el.style.color = "#155724";
         }
 
-        async function genera() {
-            if(pads[0].isEmpty()) return alert("Manca la firma!");
-            document.getElementById('status').innerText = "Generazione in corso...";
+        async function finalizza() {
+            if(pads[0].isEmpty()) return alert("Inserire almeno la firma principale.");
+            const st = document.getElementById('status');
+            st.innerText = "⏳ Creazione PDF in corso...";
+            
             try {
-                const pdfDoc = await PDFLib.PDFDocument.load(pdfArrayBuffer);
+                const pdfDoc = await PDFLib.PDFDocument.load(new Uint8Array(rawPdfData));
                 const page = pdfDoc.getPages()[0];
+                
+                // Coordinate firme
                 const pos = [{x:340, y:560}, {x:380, y:130}, {x:360, y:55}];
                 
                 for(let i=0; i<3; i++) {
@@ -131,6 +173,7 @@
                     }
                 }
 
+                // Aggiunta Foto
                 const f1 = document.getElementById('ff').files[0], f2 = document.getElementById('fr').files[0];
                 if(f1 || f2) {
                     const nP = pdfDoc.addPage([595, 842]);
@@ -145,14 +188,17 @@
                 }
 
                 const finalPdf = await pdfDoc.save();
-                const file = new File([finalPdf], "Pratica.pdf", { type: "application/pdf" });
-                if (navigator.share) await navigator.share({ files: [file] });
-                else {
+                const outName = "Pratica_" + nomeAssistito.replace(/\s+/g, '_') + ".pdf";
+                const file = new File([finalPdf], outName, { type: "application/pdf" });
+                
+                if (navigator.share) {
+                    await navigator.share({ files: [file], title: outName });
+                } else {
                     const a = document.createElement("a");
-                    a.href = URL.createObjectURL(file); a.download = "Pratica.pdf"; a.click();
+                    a.href = URL.createObjectURL(file); a.download = outName; a.click();
                 }
-            } catch (e) { alert(e.message); }
-            document.getElementById('status').innerText = "";
+            } catch (e) { alert("Errore: " + e.message); }
+            st.innerText = "";
         }
     </script>
 </body>
