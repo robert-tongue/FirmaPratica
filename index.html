@@ -4,96 +4,124 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Firma Pratica Digitale</title>
+    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
     <style>
         :root { --primary: #005596; --bg: #f4f7f9; --success: #28a745; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; -webkit-text-size-adjust: 100%; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h2 { color: var(--primary); text-align: center; font-size: 1.2em; }
+        h2 { color: var(--primary); text-align: center; font-size: 1.2em; margin: 10px 0; }
+        h3 { margin: 0 0 10px 0; font-size: 1em; color: var(--primary); border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        
+        /* Box Anteprima PDF */
         #pdf-viewer { width: 100%; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; background: #525659; }
         canvas.pdf-page { width: 100% !important; height: auto !important; display: block; margin-bottom: 5px; }
-        .sig-container { position: relative; width: 100%; height: 150px; background: #fff; border: 2px solid #ddd; border-radius: 8px; touch-action: none; }
-        canvas.sig-pad { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
+
+        /* Firme */
+        .sig-container { position: relative; width: 100%; height: 160px; background: #fff; border: 2px solid #ddd; border-radius: 8px; touch-action: none; margin-bottom: 5px; }
+        canvas.sig-pad { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; z-index: 10; }
+        
         button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; -webkit-appearance: none; }
         .btn-main { background: var(--primary); color: white; width: 100%; padding: 18px; font-size: 1.1em; margin-top: 15px; }
-        .btn-copy { background: var(--success); color: white; width: 100%; padding: 10px; margin: 10px 0; display: none; }
-        .btn-clear { background: #f8d7da; color: #721c24; padding: 5px 12px; font-size: 0.75em; margin-top: 5px; }
-        .btn-photo { background: #e9ecef; color: #495057; width: 100%; padding: 14px; margin-top: 10px; border: 1px solid #ccc; }
+        .btn-copy { background: var(--success); color: white; width: 100%; padding: 12px; margin: 10px 0; display: none; width: 100%; }
+        .btn-clear { background: #f8d7da; color: #721c24; padding: 6px 15px; font-size: 0.8em; margin-bottom: 10px; }
+        .btn-photo { background: #e9ecef; color: #495057; width: 100%; padding: 15px; margin-top: 10px; border: 1px solid #ccc; text-align: center; }
+        
         #status { text-align: center; font-weight: bold; color: var(--primary); margin-top: 20px; }
         .hidden { display: none; }
+        .label-firma { font-weight: bold; display: block; margin-top: 10px; color: #555; font-size: 0.9em; }
     </style>
 </head>
 <body>
 
-    <h2 id="titoloAssistito">Caricamento...</h2>
+    <h2 id="displayNome">Caricamento Pratica...</h2>
 
     <div class="card">
-        <h3>📄 Documento</h3>
-        <div id="pdf-viewer"></div>
+        <h3>📄 Visualizza Documento</h3>
+        <div id="pdf-viewer"><p style="color:white;text-align:center;padding:20px;">Attendere...</p></div>
     </div>
 
     <div class="card">
-        <h3>✍️ Firme</h3>
-        <label>1. Delega</label>
+        <h3>✍️ Apponi le Firme</h3>
+        
+        <label class="label-firma">1. Firma per Delega</label>
         <div class="sig-container"><canvas id="p1" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[0].clear()">CANCELLA</button>
-        <button id="cBtn" class="btn-copy" onclick="copiaFirme()">✨ COPIA FIRMA SU TUTTE</button>
+        
+        <button id="btnCopia" class="btn-copy" onclick="eseguiCopia()">✨ COPIA QUESTA FIRMA SU TUTTE</button>
 
-        <label style="display:block; margin-top:15px;">2. Privacy</label>
+        <label class="label-firma">2. Firma per Privacy</label>
         <div class="sig-container"><canvas id="p2" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[1].clear()">CANCELLA</button>
 
-        <label style="display:block; margin-top:15px;">3. Dichiarazione</label>
+        <label class="label-firma">3. Firma Dichiarazione</label>
         <div class="sig-container"><canvas id="p3" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[2].clear()">CANCELLA</button>
     </div>
 
     <div class="card">
-        <h3>📸 Foto</h3>
-        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="btn-ff">📷 FOTO FRONTE</button>
-        <input type="file" id="ff" class="hidden" accept="image/*" onchange="segna('btn-ff')">
-        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="btn-fr">📷 FOTO RETRO</button>
-        <input type="file" id="fr" class="hidden" accept="image/*" onchange="segna('btn-fr')">
+        <h3>📸 Foto Documento d'Identità</h3>
+        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="lbl-ff">📷 FOTO FRONTE</button>
+        <input type="file" id="ff" class="hidden" accept="image/*" onchange="confermaFoto('lbl-ff')">
+        
+        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="lbl-fr">📷 FOTO RETRO</button>
+        <input type="file" id="fr" class="hidden" accept="image/*" onchange="confermaFoto('lbl-fr')">
     </div>
 
-    <button class="btn-main" onclick="finalizza()">CONFERMA E INVIA</button>
+    <button class="btn-main" onclick="generaDocumentoFinale()">CONFERMA E INVIA PRATICA</button>
+    
     <div id="status"></div>
 
     <script>
         let pads = [];
-        // FUNZIONE DI PULIZIA BASE64
-        function getCleanBase64() {
+        let pdfBytesOriginal = null;
+
+        // --- FUNZIONE DECODE ROBUSTA ---
+        function decodePdfData() {
             try {
-                let hash = window.location.hash.substring(1);
-                let params = new URLSearchParams(hash);
-                let raw = params.get('p');
-                if (!raw) return null;
-                // Rimuove eventuali intestazioni data:application/pdf;base64,
-                return raw.replace(/^data:application\/pdf;base64,/, '').replace(/\s/g, '');
-            } catch (e) { return null; }
+                const hash = window.location.hash.substring(1);
+                const urlParams = new URLSearchParams(hash);
+                let base64 = urlParams.get('p');
+                if (!base64) return null;
+
+                // Pulizia stringa: rimuove spazi, ritorni a capo e l'eventuale prefisso data:
+                base64 = base64.replace(/^data:application\/pdf;base64,/, '').replace(/\s/g, '');
+                
+                // Decodifica manuale per evitare errori di caratteri non validi
+                const binaryString = atob(base64);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return bytes;
+            } catch (e) {
+                console.error("Errore decodifica:", e);
+                return null;
+            }
         }
 
-        const cleanB64 = getCleanBase64();
-        const params = new URLSearchParams(window.location.hash.substring(1));
-        const nomeAssistito = params.get('n') || "Assistito";
-
-        document.getElementById('titoloAssistito').innerText = "Pratica: " + nomeAssistito;
+        const nomeParams = new URLSearchParams(window.location.hash.substring(1)).get('n') || "Assistito";
+        document.getElementById('displayNome').innerText = "Pratica: " + nomeParams;
 
         window.onload = async () => {
-            if (!cleanB64) {
-                document.getElementById('pdf-viewer').innerHTML = "Errore: PDF non trovato.";
+            pdfBytesOriginal = decodePdfData();
+            if (!pdfBytesOriginal) {
+                document.getElementById('pdf-viewer').innerHTML = "<p style='color:red;padding:20px;'>Errore: Documento non valido o link corrotto.</p>";
                 return;
             }
 
+            // --- RENDER PDF ANTEPRIMA ---
             try {
-                const pdfData = atob(cleanB64);
-                const loadingTask = pdfjsLib.getDocument({data: pdfData});
+                const loadingTask = pdfjsLib.getDocument({data: pdfBytesOriginal});
                 const pdf = await loadingTask.promise;
                 const viewer = document.getElementById('pdf-viewer');
-                for(let n=1; n<=pdf.numPages; n++) {
-                    const page = await pdf.getPage(n);
+                viewer.innerHTML = '';
+                
+                for(let i=1; i<=pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
                     const viewport = page.getViewport({scale: 1.0});
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page';
@@ -102,70 +130,97 @@
                     await page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise;
                     viewer.appendChild(canvas);
                 }
-            } catch (e) { console.error(e); }
+            } catch (err) { console.error("Errore anteprima:", err); }
 
+            // --- INIZIALIZZA FIRME ---
             setTimeout(() => {
-                ['p1','p2','p3'].forEach((id, i) => {
-                    const canvas = document.getElementById(id);
+                ['p1','p2','p3'].forEach((id, idx) => {
+                    const cv = document.getElementById(id);
                     const ratio = window.devicePixelRatio || 1;
-                    canvas.width = canvas.offsetWidth * ratio;
-                    canvas.height = canvas.offsetHeight * ratio;
-                    canvas.getContext("2d").scale(ratio, ratio);
-                    const p = new SignaturePad(canvas);
-                    pads.push(p);
-                    if(i === 0) p.onBegin = () => document.getElementById('cBtn').style.display = 'block';
+                    cv.width = cv.offsetWidth * ratio;
+                    cv.height = cv.offsetHeight * ratio;
+                    cv.getContext("2d").scale(ratio, ratio);
+                    
+                    const pad = new SignaturePad(cv, { backgroundColor: 'rgba(255, 255, 255, 0)' });
+                    pads.push(pad);
+
+                    if(idx === 0) {
+                        pad.addEventListener("beginStroke", () => {
+                            document.getElementById('btnCopia').style.display = 'block';
+                        });
+                    }
                 });
-            }, 500);
+            }, 600);
         };
 
-        function copiaFirme() {
-            const data = pads[0].toDataURL();
-            pads[1].fromDataURL(data); pads[2].fromDataURL(data);
+        function eseguiCopia() {
+            if(pads[0].isEmpty()) return;
+            const imgData = pads[0].toDataURL();
+            pads[1].fromDataURL(imgData);
+            pads[2].fromDataURL(imgData);
         }
 
-        function segna(id) {
-            document.getElementById(id).innerText = "✅ ACQUISITA";
-            document.getElementById(id).style.background = "#d4edda";
+        function confermaFoto(id) {
+            const b = document.getElementById(id);
+            b.innerText = "✅ FOTO ACQUISITA";
+            b.style.background = "#d4edda";
+            b.style.color = "#155724";
         }
 
-        async function finalizza() {
-            if(pads[0].isEmpty()) return alert("Manca la firma!");
-            document.getElementById('status').innerText = "Generazione in corso...";
+        async function generaDocumentoFinale() {
+            if(pads[0].isEmpty()) return alert("La firma è obbligatoria!");
+            
+            const st = document.getElementById('status');
+            st.innerText = "⏳ Elaborazione in corso...";
+
             try {
-                const pdfBytes = Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0));
-                const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+                const pdfDoc = await PDFLib.PDFDocument.load(pdfBytesOriginal);
                 const page = pdfDoc.getPages()[0];
-                const pos = [{x:340, y:560}, {x:380, y:130}, {x:360, y:55}];
+                
+                // Coordinate standard firme
+                const posizioni = [{x:340, y:560}, {x:380, y:130}, {x:360, y:55}];
                 
                 for(let i=0; i<3; i++) {
                     if(!pads[i].isEmpty()) {
-                        const img = await pdfDoc.embedPng(pads[i].toDataURL());
-                        page.drawImage(img, {x:pos[i].x, y:pos[i].y, width:100, height:45});
+                        const firmaImg = await pdfDoc.embedPng(pads[i].toDataURL());
+                        page.drawImage(firmaImg, {x:posizioni[i].x, y:posizioni[i].y, width:110, height:50});
                     }
                 }
 
-                const fF = document.getElementById('ff').files[0], fR = document.getElementById('fr').files[0];
-                if(fF || fR) {
-                    const nP = pdfDoc.addPage([595, 842]);
-                    const draw = async (file, y) => {
-                        const b = await file.arrayBuffer();
-                        const im = file.type.includes('png') ? await pdfDoc.embedPng(b) : await pdfDoc.embedJpg(b);
-                        const d = im.scaleToFit(500, 330);
-                        nP.drawImage(im, {x:50, y:y, width:d.width, height:d.height});
+                // Aggiunta Foto Documenti in coda
+                const f1 = document.getElementById('ff').files[0];
+                const f2 = document.getElementById('fr').files[0];
+
+                if(f1 || f2) {
+                    const nuovaPagina = pdfDoc.addPage([595, 842]);
+                    const inserisciFoto = async (file, y) => {
+                        const arrayBuffer = await file.arrayBuffer();
+                        const image = file.type.includes('png') ? await pdfDoc.embedPng(arrayBuffer) : await pdfDoc.embedJpg(arrayBuffer);
+                        const scala = image.scaleToFit(500, 350);
+                        nuovaPagina.drawImage(image, { x: 50, y: y, width: scala.width, height: scala.height });
                     };
-                    if(fF) await draw(fF, 430);
-                    if(fR) await draw(fR, 60);
+                    if(f1) await inserisciFoto(f1, 430);
+                    if(f2) await inserisciFoto(f2, 50);
                 }
 
-                const res = await pdfDoc.save();
-                const file = new File([res], "Pratica.pdf", { type: "application/pdf" });
-                if (navigator.share) await navigator.share({ files: [file] });
-                else {
-                    const a = document.createElement("a");
-                    a.href = URL.createObjectURL(file); a.download = "Pratica.pdf"; a.click();
+                const pdfFinale = await pdfDoc.save();
+                const nomeFile = "Pratica_" + nomeParams.replace(/\s+/g, '_') + ".pdf";
+                const blobFile = new File([pdfFinale], nomeFile, { type: "application/pdf" });
+
+                if (navigator.share) {
+                    await navigator.share({ files: [blobFile], title: nomeFile });
+                    st.innerText = "✅ Pronta per l'invio!";
+                } else {
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blobFile);
+                    link.download = nomeFile;
+                    link.click();
+                    st.innerText = "✅ Scaricato con successo.";
                 }
-            } catch (e) { alert("Errore: " + e.message); }
-            document.getElementById('status').innerText = "";
+            } catch (err) {
+                alert("Errore PDF: " + err.message);
+                st.innerText = "";
+            }
         }
     </script>
 </body>
