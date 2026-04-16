@@ -4,34 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Firma Pratica Digitale</title>
-    
     <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-
     <style>
         :root { --primary: #005596; --bg: #f4f7f9; --success: #28a745; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 15px; color: #333; }
         .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        h2 { color: var(--primary); text-align: center; font-size: 1.2em; margin-top: 10px; }
-        h3 { margin-top: 0; color: var(--primary); font-size: 1em; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        
-        /* Anteprima PDF compatibile iPhone */
-        #pdf-viewer { width: 100%; max-height: 350px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; background: #525659; }
+        h2 { color: var(--primary); text-align: center; font-size: 1.2em; }
+        #pdf-viewer { width: 100%; max-height: 300px; overflow-y: auto; border: 1px solid #ccc; border-radius: 8px; background: #525659; }
         canvas.pdf-page { width: 100% !important; height: auto !important; display: block; margin-bottom: 5px; }
-
-        .sig-container { position: relative; width: 100%; height: 150px; background: #fff; border: 2px solid #ddd; border-radius: 8px; touch-action: none; margin-bottom: 5px; }
+        .sig-container { position: relative; width: 100%; height: 150px; background: #fff; border: 2px solid #ddd; border-radius: 8px; touch-action: none; }
         canvas.sig-pad { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
-        
-        .label-f { font-weight: bold; display: block; margin: 15px 0 5px; font-size: 0.9em; color: var(--primary); }
-        button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; -webkit-appearance: none; }
-        
+        button { border: none; border-radius: 8px; cursor: pointer; font-weight: bold; -webkit-appearance: none; }
         .btn-main { background: var(--primary); color: white; width: 100%; padding: 18px; font-size: 1.1em; margin-top: 15px; }
         .btn-copy { background: var(--success); color: white; width: 100%; padding: 10px; margin: 10px 0; display: none; }
-        .btn-clear { background: #f8d7da; color: #721c24; padding: 5px 12px; font-size: 0.75em; }
-        .btn-photo { background: #e9ecef; color: #495057; width: 100%; padding: 14px; margin-top: 10px; border: 1px solid #ccc; font-size: 0.9em; }
-        
-        #status { text-align: center; font-weight: bold; color: var(--primary); margin-top: 20px; min-height: 1.2em; }
+        .btn-clear { background: #f8d7da; color: #721c24; padding: 5px 12px; font-size: 0.75em; margin-top: 5px; }
+        .btn-photo { background: #e9ecef; color: #495057; width: 100%; padding: 14px; margin-top: 10px; border: 1px solid #ccc; }
+        #status { text-align: center; font-weight: bold; color: var(--primary); margin-top: 20px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -40,124 +30,111 @@
     <h2 id="titoloAssistito">Caricamento...</h2>
 
     <div class="card">
-        <h3>📄 Documento da firmare</h3>
-        <div id="pdf-viewer"><p style="color:white; text-align:center; padding:20px;">In attesa del documento...</p></div>
+        <h3>📄 Documento</h3>
+        <div id="pdf-viewer"></div>
     </div>
 
     <div class="card">
-        <h3>✍️ Firme richieste</h3>
-        
-        <label class="label-f">1. Firma per Delega</label>
+        <h3>✍️ Firme</h3>
+        <label>1. Delega</label>
         <div class="sig-container"><canvas id="p1" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[0].clear()">CANCELLA</button>
-        
-        <button id="cBtn" class="btn-copy" onclick="copiaFirme()">✨ COPIA QUESTA FIRMA SU TUTTE</button>
+        <button id="cBtn" class="btn-copy" onclick="copiaFirme()">✨ COPIA FIRMA SU TUTTE</button>
 
-        <label class="label-f">2. Firma per Privacy</label>
+        <label style="display:block; margin-top:15px;">2. Privacy</label>
         <div class="sig-container"><canvas id="p2" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[1].clear()">CANCELLA</button>
 
-        <label class="label-f">3. Firma Dichiarazione</label>
+        <label style="display:block; margin-top:15px;">3. Dichiarazione</label>
         <div class="sig-container"><canvas id="p3" class="sig-pad"></canvas></div>
         <button class="btn-clear" onclick="pads[2].clear()">CANCELLA</button>
     </div>
 
     <div class="card">
-        <h3>📸 Foto Documenti</h3>
-        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="btn-ff">📷 FOTO FRONTE DOCUMENTO</button>
-        <input type="file" id="ff" class="hidden" accept="image/*" onchange="segnaAcquisito('btn-ff')">
-        
-        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="btn-fr">📷 FOTO RETRO DOCUMENTO</button>
-        <input type="file" id="fr" class="hidden" accept="image/*" onchange="segnaAcquisito('btn-fr')">
+        <h3>📸 Foto</h3>
+        <button class="btn-photo" onclick="document.getElementById('ff').click()" id="btn-ff">📷 FOTO FRONTE</button>
+        <input type="file" id="ff" class="hidden" accept="image/*" onchange="segna('btn-ff')">
+        <button class="btn-photo" onclick="document.getElementById('fr').click()" id="btn-fr">📷 FOTO RETRO</button>
+        <input type="file" id="fr" class="hidden" accept="image/*" onchange="segna('btn-fr')">
     </div>
 
-    <button class="btn-main" onclick="finalizzaTutto()">CONFERMA E INVIA PRATICA</button>
-    
+    <button class="btn-main" onclick="finalizza()">CONFERMA E INVIA</button>
     <div id="status"></div>
 
     <script>
         let pads = [];
+        // FUNZIONE DI PULIZIA BASE64
+        function getCleanBase64() {
+            try {
+                let hash = window.location.hash.substring(1);
+                let params = new URLSearchParams(hash);
+                let raw = params.get('p');
+                if (!raw) return null;
+                // Rimuove eventuali intestazioni data:application/pdf;base64,
+                return raw.replace(/^data:application\/pdf;base64,/, '').replace(/\s/g, '');
+            } catch (e) { return null; }
+        }
+
+        const cleanB64 = getCleanBase64();
         const params = new URLSearchParams(window.location.hash.substring(1));
         const nomeAssistito = params.get('n') || "Assistito";
-        const pdfBase64 = params.get('p');
 
         document.getElementById('titoloAssistito').innerText = "Pratica: " + nomeAssistito;
 
         window.onload = async () => {
-            if (!pdfBase64) {
-                document.getElementById('pdf-viewer').innerHTML = "<p style='color:red; padding:10px;'>Errore: Link non valido o PDF mancante.</p>";
+            if (!cleanB64) {
+                document.getElementById('pdf-viewer').innerHTML = "Errore: PDF non trovato.";
                 return;
             }
 
-            // 1. Anteprima PDF (Compatibile iPhone)
             try {
-                const loadingTask = pdfjsLib.getDocument({data: atob(pdfBase64)});
+                const pdfData = atob(cleanB64);
+                const loadingTask = pdfjsLib.getDocument({data: pdfData});
                 const pdf = await loadingTask.promise;
                 const viewer = document.getElementById('pdf-viewer');
-                viewer.innerHTML = '';
-                
                 for(let n=1; n<=pdf.numPages; n++) {
                     const page = await pdf.getPage(n);
                     const viewport = page.getViewport({scale: 1.0});
                     const canvas = document.createElement('canvas');
                     canvas.className = 'pdf-page';
-                    const context = canvas.getContext('2d');
                     canvas.height = viewport.height;
                     canvas.width = viewport.width;
-                    await page.render({canvasContext: context, viewport: viewport}).promise;
+                    await page.render({canvasContext: canvas.getContext('2d'), viewport: viewport}).promise;
                     viewer.appendChild(canvas);
                 }
-            } catch (e) {
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
 
-            // 2. Setup Pad Firme
             setTimeout(() => {
                 ['p1','p2','p3'].forEach((id, i) => {
                     const canvas = document.getElementById(id);
-                    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+                    const ratio = window.devicePixelRatio || 1;
                     canvas.width = canvas.offsetWidth * ratio;
                     canvas.height = canvas.offsetHeight * ratio;
                     canvas.getContext("2d").scale(ratio, ratio);
-                    
-                    const p = new SignaturePad(canvas, { backgroundColor: 'rgba(255, 255, 255, 0)' });
+                    const p = new SignaturePad(canvas);
                     pads.push(p);
-
-                    if(i === 0) {
-                        p.addEventListener("beginStroke", () => {
-                            document.getElementById('cBtn').style.display = 'block';
-                        });
-                    }
+                    if(i === 0) p.onBegin = () => document.getElementById('cBtn').style.display = 'block';
                 });
-            }, 800);
+            }, 500);
         };
 
         function copiaFirme() {
-            if(pads[0].isEmpty()) return;
             const data = pads[0].toDataURL();
-            pads[1].fromDataURL(data);
-            pads[2].fromDataURL(data);
+            pads[1].fromDataURL(data); pads[2].fromDataURL(data);
         }
 
-        function segnaAcquisito(btnId) {
-            const btn = document.getElementById(btnId);
-            btn.innerText = "✅ FOTO ACQUISITA";
-            btn.style.background = "#d4edda";
-            btn.style.borderColor = "#c3e6cb";
+        function segna(id) {
+            document.getElementById(id).innerText = "✅ ACQUISITA";
+            document.getElementById(id).style.background = "#d4edda";
         }
 
-        async function finalizzaTutto() {
-            if(pads[0].isEmpty()) return alert("È necessaria almeno la prima firma!");
-            
-            const st = document.getElementById('status');
-            st.innerText = "Generazione PDF in corso...";
-
+        async function finalizza() {
+            if(pads[0].isEmpty()) return alert("Manca la firma!");
+            document.getElementById('status').innerText = "Generazione in corso...";
             try {
-                const pdfBytes = Uint8Array.from(atob(pdfBase64), c => c.charCodeAt(0));
+                const pdfBytes = Uint8Array.from(atob(cleanB64), c => c.charCodeAt(0));
                 const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
                 const page = pdfDoc.getPages()[0];
-                
-                // Posizioni firme (standard su prima pagina)
                 const pos = [{x:340, y:560}, {x:380, y:130}, {x:360, y:55}];
                 
                 for(let i=0; i<3; i++) {
@@ -167,41 +144,29 @@
                     }
                 }
 
-                // Aggiunta Foto Documenti
-                const fF = document.getElementById('ff').files[0];
-                const fR = document.getElementById('fr').files[0];
-
+                const fF = document.getElementById('ff').files[0], fR = document.getElementById('fr').files[0];
                 if(fF || fR) {
                     const nP = pdfDoc.addPage([595, 842]);
-                    const drawImg = async (file, yPos) => {
-                        const buffer = await file.arrayBuffer();
-                        const image = file.type.includes('png') ? await pdfDoc.embedPng(buffer) : await pdfDoc.embedJpg(buffer);
-                        const dims = image.scaleToFit(500, 330);
-                        nP.drawImage(image, { x: 50, y: yPos, width: dims.width, height: dims.height });
+                    const draw = async (file, y) => {
+                        const b = await file.arrayBuffer();
+                        const im = file.type.includes('png') ? await pdfDoc.embedPng(b) : await pdfDoc.embedJpg(b);
+                        const d = im.scaleToFit(500, 330);
+                        nP.drawImage(im, {x:50, y:y, width:d.width, height:d.height});
                     };
-                    if(fF) await drawImg(fF, 430);
-                    if(fR) await drawImg(fR, 60);
+                    if(fF) await draw(fF, 430);
+                    if(fR) await draw(fR, 60);
                 }
 
                 const res = await pdfDoc.save();
-                const outName = "Pratica_" + nomeAssistito.replace(/\s+/g, '_') + ".pdf";
-                const file = new File([res], outName, { type: "application/pdf" });
-
-                if (navigator.share) {
-                    await navigator.share({ files: [file], title: outName });
-                    st.innerText = "Inviato con successo!";
-                } else {
-                    const url = URL.createObjectURL(file);
+                const file = new File([res], "Pratica.pdf", { type: "application/pdf" });
+                if (navigator.share) await navigator.share({ files: [file] });
+                else {
                     const a = document.createElement("a");
-                    a.href = url; a.download = outName; a.click();
-                    st.innerText = "PDF scaricato.";
+                    a.href = URL.createObjectURL(file); a.download = "Pratica.pdf"; a.click();
                 }
-            } catch (e) {
-                alert("Errore durante la creazione del PDF: " + e.message);
-                st.innerText = "";
-            }
+            } catch (e) { alert("Errore: " + e.message); }
+            document.getElementById('status').innerText = "";
         }
     </script>
 </body>
 </html>
-
